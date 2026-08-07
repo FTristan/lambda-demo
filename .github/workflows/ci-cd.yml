@@ -26,6 +26,7 @@ jobs:
   terraform-plan:
     needs: terraform-init
     uses: ./.github/workflows/terraform-plan.yml
+    secrets: inherit
 
   docker:
     needs: terraform-plan
