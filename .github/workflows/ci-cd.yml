@@ -28,6 +28,12 @@ jobs:
     uses: ./.github/workflows/terraform-plan.yml
     secrets: inherit
 
+  terraform-apply:
+    needs: terraform-plan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/terraform-apply.yml
+    secrets: inherit
+
   docker:
     needs: terraform-plan
     uses: ./.github/workflows/docker.yml

@@ -1,0 +1,48 @@
+name: Terraform Apply
+
+on:
+  workflow_call:
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Check AWS credentials
+        id: aws_creds
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Terraform apply
+        if: steps.aws_creds.outputs.has_creds == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_REGION || secrets.AWS_REGION || 'us-east-1' }}
+        run: terraform apply -input=false -auto-approve
+
+      - name: Skip Terraform apply without AWS credentials
+        if: steps.aws_creds.outputs.has_creds != 'true'
+        run: echo "Skipping terraform apply because AWS credentials were not provided. Add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets to enable it."
