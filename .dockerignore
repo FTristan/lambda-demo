@@ -1,0 +1,9 @@
+__pycache__/
+.pytest_cache/
+.terraform/
+.git/
+.vscode/
+*.zip
+*.pyc
+*.pyo
+*.pyd
