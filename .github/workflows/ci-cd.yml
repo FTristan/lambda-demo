@@ -19,9 +19,13 @@ jobs:
     needs: lint
     uses: ./.github/workflows/test.yml
 
-  terraform:
+  terraform-init:
     needs: test
-    uses: ./.github/workflows/terraform.yml
+    uses: ./.github/workflows/terraform-init.yml
+
+  terraform-plan:
+    needs: terraform-init
+    uses: ./.github/workflows/terraform-plan.yml
 
   docker:
     needs: terraform
