@@ -21,8 +21,21 @@ jobs:
       - name: Terraform init
         run: terraform init -input=false
 
+      - name: Check AWS credentials
+        id: aws_creds
+        shell: bash
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -n "$AWS_ACCESS_KEY_ID" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "has_creds=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_creds=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Terraform plan
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: steps.aws_creds.outputs.has_creds == 'true'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -31,5 +44,5 @@ jobs:
         run: terraform plan -input=false -refresh=false
 
       - name: Skip Terraform plan without AWS credentials
-        if: ${{ secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '' }}
+        if: steps.aws_creds.outputs.has_creds != 'true'
         run: echo "Skipping terraform plan because AWS credentials were not provided. Add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets to enable it."
