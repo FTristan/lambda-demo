@@ -28,5 +28,5 @@ jobs:
     uses: ./.github/workflows/terraform-plan.yml
 
   docker:
-    needs: terraform
+    needs: terraform-plan
     uses: ./.github/workflows/docker.yml
